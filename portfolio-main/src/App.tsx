@@ -127,7 +127,7 @@ const PROJECTS = [
   { num: "02", category: "Enterprise · Full-Stack", name: "NexusHR", desc: "Enterprise HR management platform centralizing employee operations, payroll, recruitment, attendance, and workforce analytics.", github: "https://github.com/Sharon-Sam14/NexusHR", repo: "NexusHR" },
   { num: "03", category: "Healthcare · React · TypeScript", name: "Cura", desc: "Cloud-based healthcare management platform — patient care, appointments, and role-based clinical workflows.", github: "https://github.com/Sharon-Sam14/Cura", repo: "Cura" },
   { num: "04", category: "Security · Python · AI", name: "AI Login Detection System", desc: "AI-powered login intrusion detection system that identifies anomalous authentication patterns in real time. Sem 5 mini project.", github: "https://github.com/Sharon-Sam14/mal-login-detection-system", repo: "mal-login-detection-system" },
-  { num: "05", category: "Frontend · JavaScript", name: "Weather App", desc: "Live weather application with real-time data fetching, dynamic UI updates, and clean responsive design.", github: "https://github.com/Sharon-Sam14/SCT_WD_4", repo: "SCT_WD_4" },
+  { num: "05", category: "FinTech · Django · Python", name: "PROSPERA", desc: "Web-based budget management application designed to help individuals effectively manage budgets, track expenses, and visualize spending habits.", github: "https://github.com/Sharon-Sam14/MiniProject1", repo: "MiniProject1" },
 ];
 
 // ─── THEME CONFIG ─────────────────────────────────────────────────────────────
@@ -209,7 +209,7 @@ function ProjectCard({ project, index, total, theme }: ProjectCardProps) {
               className="font-black leading-none select-none block"
               style={{
                 fontSize: "clamp(4rem, 10vw, 130px)",
-                color: theme.projCardBorder === '#D7E2EA' ? 'rgba(215,226,234,0.07)' : 'rgba(0,0,0,0.05)',
+                color: theme.text === '#D7E2EA' ? 'rgba(215,226,234,0.18)' : 'rgba(17,19,24,0.15)',
                 lineHeight: 1,
               }}
             >
