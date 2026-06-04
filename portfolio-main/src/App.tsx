@@ -271,12 +271,7 @@ interface NavbarProps {
 
 function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
   const [activeSection, setActiveSection] = useState<string>("hero");
-  const [isNavbarVisible, setIsNavbarVisible] = useState<boolean>(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  
-  const lastScrollY = useRef(0);
-  const scrollUpAccumulator = useRef(0);
-  const scrollDownAccumulator = useRef(0);
 
   // 1. Detect Active Section asynchronously using IntersectionObserver (zero layout queries on scroll)
   useEffect(() => {
@@ -305,43 +300,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     return () => observer.disconnect();
   }, []);
 
-  // 2. High-performance scroll direction visibility tracker (hides on scroll-down, reveals on 150px scroll-up)
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const delta = currentScrollY - lastScrollY.current;
-
-      if (currentScrollY < 100) {
-        setIsNavbarVisible(true);
-        scrollUpAccumulator.current = 0;
-        scrollDownAccumulator.current = 0;
-      } else {
-        if (delta > 0) {
-          // Scrolling Down -> Hide immediately once scroll-down exceeds 10px
-          scrollUpAccumulator.current = 0;
-          scrollDownAccumulator.current += delta;
-          if (scrollDownAccumulator.current > 10) {
-            setIsNavbarVisible(false);
-          }
-        } else if (delta < 0) {
-          // Scrolling Up -> Show only after scrolling up by 150px (confirms intent to navigate)
-          scrollDownAccumulator.current = 0;
-          scrollUpAccumulator.current += Math.abs(delta);
-          if (scrollUpAccumulator.current > 150) {
-            setIsNavbarVisible(true);
-          }
-        }
-      }
-
-      lastScrollY.current = currentScrollY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    lastScrollY.current = window.scrollY;
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  // Close mobile menu on scroll
   useEffect(() => {
     const close = () => setMobileOpen(false);
     window.addEventListener("scroll", close, { passive: true });
@@ -359,13 +318,8 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     else if (item === "Contact")  scrollTo("contact");
   };
 
-  const showNavbar = isNavbarVisible || activeSection === "hero" || mobileOpen;
-
   return (
-    <motion.header
-      initial={{ y: 0 }}
-      animate={{ y: showNavbar ? 0 : "-100%" }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+    <header
       className="fixed top-0 left-0 right-0 z-50 transition-colors duration-500"
       style={{ background: theme.navBg, backdropFilter: "blur(12px)", borderBottom: `1px solid ${theme.borderFaint}` }}
     >
@@ -470,7 +424,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </header>
   );
 }
 
