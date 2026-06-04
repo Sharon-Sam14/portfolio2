@@ -941,7 +941,7 @@ export default function App() {
           </a>
         </div>
         <p className="font-light text-sm text-center" style={{ color: theme.textMuted }}>
-          © 2026 Sharon Sam. Designed and developed with React, TypeScript, Tailwind CSS, and Framer Motion.
+          © 2026 Made By Sharon Sam
         </p>
       </footer>
 
