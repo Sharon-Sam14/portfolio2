@@ -435,7 +435,18 @@ export default function App() {
 
   const marqueeRef = useRef<HTMLDivElement>(null);
   const marqueeTopRef = useRef<number>(0);
-  const [marqueeOffset, setMarqueeOffset] = useState(0);
+
+  const { scrollY } = useScroll();
+  const marqueeTranslateX1 = useTransform(scrollY, (latestScrollY) => {
+    const sectionTop = marqueeTopRef.current;
+    const offset = (latestScrollY - sectionTop + window.innerHeight) * 0.3;
+    return offset - 200;
+  });
+  const marqueeTranslateX2 = useTransform(scrollY, (latestScrollY) => {
+    const sectionTop = marqueeTopRef.current;
+    const offset = (latestScrollY - sectionTop + window.innerHeight) * 0.3;
+    return -(offset - 200);
+  });
 
   useEffect(() => {
     const updateMarqueeTop = () => {
@@ -448,17 +459,8 @@ export default function App() {
     updateMarqueeTop();
     window.addEventListener("resize", updateMarqueeTop);
 
-    const handleScroll = () => {
-      const sectionTop = marqueeTopRef.current;
-      setMarqueeOffset((window.scrollY - sectionTop + window.innerHeight) * 0.3);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
     return () => {
       window.removeEventListener("resize", updateMarqueeTop);
-      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -569,20 +571,20 @@ export default function App() {
       <div ref={marqueeRef}>
         <section className="pt-20 sm:pt-28 md:pt-36 pb-10 overflow-hidden flex flex-col gap-3"
           style={{ background: theme.sectionBg }}>
-          <div style={{ transform: `translateX(${marqueeOffset - 200}px)`, willChange: "transform" }}
+          <motion.div style={{ x: marqueeTranslateX1 }}
             className="flex gap-3 whitespace-nowrap">
             {Row1x3.map((gif, i) => (
               <img key={i} src={gif} alt="work preview" loading="lazy"
                 className="w-[280px] sm:w-[360px] md:w-[420px] h-[180px] sm:h-[230px] md:h-[270px] rounded-2xl object-cover flex-shrink-0 border border-white/5" />
             ))}
-          </div>
-          <div style={{ transform: `translateX(${-(marqueeOffset - 200)}px)`, willChange: "transform" }}
+          </motion.div>
+          <motion.div style={{ x: marqueeTranslateX2 }}
             className="flex gap-3 whitespace-nowrap">
             {Row2x3.map((gif, i) => (
               <img key={i} src={gif} alt="work preview" loading="lazy"
                 className="w-[280px] sm:w-[360px] md:w-[420px] h-[180px] sm:h-[230px] md:h-[270px] rounded-2xl object-cover flex-shrink-0 border border-white/5" />
             ))}
-          </div>
+          </motion.div>
         </section>
       </div>
 
