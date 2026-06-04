@@ -272,7 +272,6 @@ interface NavbarProps {
 function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [isNavbarVisible, setIsNavbarVisible] = useState<boolean>(true);
-  const [isHoveringTop, setIsHoveringTop] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   
   const lastScrollY = useRef(0);
@@ -312,9 +311,6 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY.current;
 
-      // Force-reset hover state on scroll to prevent PC mouse resting near the top from re-triggering visibility
-      setIsHoveringTop(false);
-
       if (currentScrollY < 100) {
         setIsNavbarVisible(true);
         scrollUpAccumulator.current = 0;
@@ -346,31 +342,11 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 3. Hover reveal near top edge (desktop mouse devices only)
-  useEffect(() => {
-    // Only register mousemove on devices with a fine pointer (mouse)
-    // This completely prevents synthetic hover flickers on mobile touch screens
-    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!hasFinePointer) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientY < 60) {
-        setIsHoveringTop(true);
-      } else {
-        setIsHoveringTop(false);
-      }
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
   useEffect(() => {
     const close = () => setMobileOpen(false);
     window.addEventListener("scroll", close, { passive: true });
     return () => window.removeEventListener("scroll", close);
   }, []);
-
-
 
   const handleNav = (item: typeof NAV_ITEMS[number]) => {
     setMobileOpen(false);
@@ -383,7 +359,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     else if (item === "Contact")  scrollTo("contact");
   };
 
-  const showNavbar = isNavbarVisible || isHoveringTop || activeSection === "hero" || mobileOpen;
+  const showNavbar = isNavbarVisible || activeSection === "hero" || mobileOpen;
 
   return (
     <motion.header
