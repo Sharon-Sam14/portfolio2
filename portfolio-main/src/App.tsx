@@ -362,13 +362,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     return () => window.removeEventListener("scroll", close);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (navbarTimerRef.current) {
-        clearTimeout(navbarTimerRef.current);
-      }
-    };
-  }, []);
+
 
   const handleNav = (item: typeof NAV_ITEMS[number]) => {
     setMobileOpen(false);
