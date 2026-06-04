@@ -312,6 +312,9 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY.current;
 
+      // Force-reset hover state on scroll to prevent PC mouse resting near the top from re-triggering visibility
+      setIsHoveringTop(false);
+
       if (currentScrollY < 100) {
         setIsNavbarVisible(true);
         scrollUpAccumulator.current = 0;
@@ -343,8 +346,13 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 3. Hover reveal near top edge (desktop)
+  // 3. Hover reveal near top edge (desktop mouse devices only)
   useEffect(() => {
+    // Only register mousemove on devices with a fine pointer (mouse)
+    // This completely prevents synthetic hover flickers on mobile touch screens
+    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!hasFinePointer) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientY < 60) {
         setIsHoveringTop(true);
