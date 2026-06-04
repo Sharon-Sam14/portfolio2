@@ -262,40 +262,116 @@ function ProjectCard({ project, index, total, theme }: ProjectCardProps) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
-export default function App() {
-  const [isDark, setIsDark] = useState(true);
+interface NavbarProps {
+  theme: ReturnType<typeof getTheme>;
+  isDark: boolean;
+  setIsDark: (dark: boolean) => void;
+  scrollTo: (id: string) => void;
+}
+
+function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
+  const [activeSection, setActiveSection] = useState<string>("hero");
+  const [isNavbarVisible, setIsNavbarVisible] = useState<boolean>(true);
+  const [isHoveringTop, setIsHoveringTop] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [lightbox, setLightbox] = useState<{ imgKey: string; title: string } | null>(null);
-  const theme = getTheme(isDark);
+  
+  const lastScrollY = useRef(0);
+  const scrollUpAccumulator = useRef(0);
+  const scrollDownAccumulator = useRef(0);
 
-  const marqueeRef = useRef<HTMLDivElement>(null);
-  const [marqueeOffset, setMarqueeOffset] = useState(0);
+  // 1. Detect Active Section asynchronously using IntersectionObserver (zero layout queries on scroll)
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: "-25% 0px -55% 0px", // triggers active section in center of viewport
+      threshold: 0,
+    };
 
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersection, observerOptions);
+
+    const sectionIds = ["hero", "about", "experience", "education", "skills", "projects", "certificates", "contact"];
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // 2. High-performance scroll direction visibility tracker (hides on scroll-down, reveals on 150px scroll-up)
   useEffect(() => {
     const handleScroll = () => {
-      if (!marqueeRef.current) return;
-      const rect = marqueeRef.current.getBoundingClientRect();
-      const sectionTop = window.scrollY + rect.top;
-      setMarqueeOffset((window.scrollY - sectionTop + window.innerHeight) * 0.3);
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY < 100) {
+        setIsNavbarVisible(true);
+        scrollUpAccumulator.current = 0;
+        scrollDownAccumulator.current = 0;
+      } else {
+        if (delta > 0) {
+          // Scrolling Down -> Hide immediately once scroll-down exceeds 10px
+          scrollUpAccumulator.current = 0;
+          scrollDownAccumulator.current += delta;
+          if (scrollDownAccumulator.current > 10) {
+            setIsNavbarVisible(false);
+          }
+        } else if (delta < 0) {
+          // Scrolling Up -> Show only after scrolling up by 150px (confirms intent to navigate)
+          scrollDownAccumulator.current = 0;
+          scrollUpAccumulator.current += Math.abs(delta);
+          if (scrollUpAccumulator.current > 150) {
+            setIsNavbarVisible(true);
+          }
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
+    lastScrollY.current = window.scrollY;
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on scroll
+  // 3. Hover reveal near top edge (desktop)
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY < 60) {
+        setIsHoveringTop(true);
+      } else {
+        setIsHoveringTop(false);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   useEffect(() => {
     const close = () => setMobileOpen(false);
     window.addEventListener("scroll", close, { passive: true });
     return () => window.removeEventListener("scroll", close);
   }, []);
 
-  const scrollTo = (id: string) => {
-    setMobileOpen(false);
-    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
-  };
+  useEffect(() => {
+    return () => {
+      if (navbarTimerRef.current) {
+        clearTimeout(navbarTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleNav = (item: typeof NAV_ITEMS[number]) => {
+    setMobileOpen(false);
     if (item === "About")     scrollTo("about");
     else if (item === "Experience") scrollTo("experience");
     else if (item === "Education") scrollTo("education");
@@ -303,6 +379,159 @@ export default function App() {
     else if (item === "Projects")  scrollTo("projects");
     else if (item === "Certificates") scrollTo("certificates");
     else if (item === "Contact")  scrollTo("contact");
+  };
+
+  const showNavbar = isNavbarVisible || isHoveringTop || activeSection === "hero" || mobileOpen;
+
+  return (
+    <motion.header
+      initial={{ y: 0 }}
+      animate={{ y: showNavbar ? 0 : "-100%" }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="fixed top-0 left-0 right-0 z-50 transition-colors duration-500"
+      style={{ background: theme.navBg, backdropFilter: "blur(12px)", borderBottom: `1px solid ${theme.borderFaint}` }}
+    >
+      <div className="flex items-center justify-between px-5 md:px-10 py-3.5 md:py-4 max-w-[1600px] mx-auto">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="font-extrabold tracking-tight text-base sm:text-lg hover:opacity-75 transition-opacity shrink-0"
+          style={{ color: theme.text }}
+        >
+          Sharon Sam
+        </button>
+
+        <nav className="hidden md:flex items-center gap-8 lg:gap-12">
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeSection === item.toLowerCase();
+            return (
+              <button
+                key={item}
+                onClick={() => handleNav(item)}
+                className={`text-sm lg:text-base font-medium uppercase tracking-wider transition-all duration-300 relative py-1 ${
+                  isActive ? "opacity-100 scale-105" : "opacity-50 hover:opacity-85"
+                }`}
+                style={{ color: theme.text }}
+              >
+                {item}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNavLine"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
+                    style={{ background: theme.text }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="rounded-full p-2 transition-all duration-300 hover:scale-110"
+            style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, color: theme.text }}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <motion.div
+              initial={false}
+              animate={{ rotate: isDark ? 0 : 180 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+            </motion.div>
+          </button>
+
+          <button
+            className="md:hidden rounded-full p-2 transition-all duration-200"
+            style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, color: theme.text }}
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="md:hidden overflow-hidden"
+            style={{ background: theme.mobileMenuBg, borderTop: `1px solid ${theme.borderFaint}` }}
+          >
+            <nav className="flex flex-col px-5 py-4 gap-1">
+              {NAV_ITEMS.map((item, i) => {
+                const isActive = activeSection === item.toLowerCase();
+                return (
+                  <motion.button
+                    key={item}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => handleNav(item)}
+                    className={`text-left py-3 px-4 rounded-2xl text-base font-medium uppercase tracking-wider transition-all duration-200 ${
+                      isActive ? "font-bold opacity-100" : "opacity-70"
+                    }`}
+                    style={{
+                      color: theme.text,
+                      background: isActive ? `${theme.text}10` : (i % 2 === 0 ? theme.cardBg : "transparent"),
+                    }}
+                  >
+                    {item}
+                  </motion.button>
+                );
+              })}
+              <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${theme.borderFaint}` }}>
+                <ContactButton onClick={() => handleNav("Contact")} />
+              </div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
+  );
+}
+
+export default function App() {
+  const [isDark, setIsDark] = useState(true);
+  const [lightbox, setLightbox] = useState<{ imgKey: string; title: string } | null>(null);
+  const theme = getTheme(isDark);
+
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const marqueeTopRef = useRef<number>(0);
+  const [marqueeOffset, setMarqueeOffset] = useState(0);
+
+  useEffect(() => {
+    const updateMarqueeTop = () => {
+      if (marqueeRef.current) {
+        const rect = marqueeRef.current.getBoundingClientRect();
+        marqueeTopRef.current = rect.top + window.scrollY;
+      }
+    };
+
+    updateMarqueeTop();
+    window.addEventListener("resize", updateMarqueeTop);
+
+    const handleScroll = () => {
+      const sectionTop = marqueeTopRef.current;
+      setMarqueeOffset((window.scrollY - sectionTop + window.innerHeight) * 0.3);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("resize", updateMarqueeTop);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const scrollTo = (id: string) => {
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
   const heroHeadingStyle: React.CSSProperties = {
@@ -333,96 +562,10 @@ export default function App() {
       style={{ background: theme.pageBg, color: theme.text, fontFamily: "'Kanit', sans-serif" }}>
 
       {/* ══════════════════════════════════ FIXED NAVBAR (all screen sizes) */}
-      <header className="fixed top-0 left-0 right-0 z-50 transition-colors duration-500"
-        style={{ background: theme.navBg, backdropFilter: "blur(12px)", borderBottom: `1px solid ${theme.borderFaint}` }}>
-        <div className="flex items-center justify-between px-5 md:px-10 py-3.5 md:py-4 max-w-[1600px] mx-auto">
-
-          {/* Brand / Logo */}
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="font-extrabold tracking-tight text-base sm:text-lg hover:opacity-75 transition-opacity shrink-0"
-            style={{ color: theme.text }}
-          >
-            Sharon Sam
-          </button>
-
-          {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center gap-8 lg:gap-12">
-            {NAV_ITEMS.map((item) => (
-              <button key={item} onClick={() => handleNav(item)}
-                className="text-sm lg:text-base font-medium uppercase tracking-wider transition-opacity duration-200 hover:opacity-60"
-                style={{ color: theme.text }}>
-                {item}
-              </button>
-            ))}
-          </nav>
-
-          {/* Right side: theme toggle + mobile hamburger */}
-          <div className="flex items-center gap-3">
-            {/* Dark/Light Toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="rounded-full p-2 transition-all duration-300 hover:scale-110"
-              style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, color: theme.text }}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              <motion.div
-                initial={false}
-                animate={{ rotate: isDark ? 0 : 180 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                {isDark ? <SunIcon /> : <MoonIcon />}
-              </motion.div>
-            </button>
-
-            {/* Hamburger (mobile only) */}
-            <button
-              className="md:hidden rounded-full p-2 transition-all duration-200"
-              style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, color: theme.text }}
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <CloseIcon /> : <MenuIcon />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile dropdown menu */}
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="md:hidden overflow-hidden"
-              style={{ background: theme.mobileMenuBg, borderTop: `1px solid ${theme.borderFaint}` }}
-            >
-              <nav className="flex flex-col px-5 py-4 gap-1">
-                {NAV_ITEMS.map((item, i) => (
-                  <motion.button
-                    key={item}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    onClick={() => handleNav(item)}
-                    className="text-left py-3 px-4 rounded-2xl text-base font-medium uppercase tracking-wider transition-all duration-200 hover:opacity-70"
-                    style={{ color: theme.text, background: i % 2 === 0 ? theme.cardBg : "transparent" }}
-                  >
-                    {item}
-                  </motion.button>
-                ))}
-                <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${theme.borderFaint}` }}>
-                  <ContactButton onClick={() => { setMobileOpen(false); scrollTo("contact"); }} />
-                </div>
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+      <Navbar theme={theme} isDark={isDark} setIsDark={setIsDark} scrollTo={scrollTo} />
 
       {/* ═══════════════════════════════════════════════════════════ 1. HERO */}
-      <section className="min-h-screen w-full flex flex-col overflow-x-clip relative pt-16">
+      <section id="hero" className="min-h-screen w-full flex flex-col overflow-x-clip relative pt-16">
 
         {/* Two-column hero layout */}
         <div className="flex-1 flex flex-col md:flex-row items-center justify-center px-5 sm:px-8 md:px-12 lg:px-20 gap-8 md:gap-12 py-12 md:py-0">
