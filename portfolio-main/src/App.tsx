@@ -6,6 +6,8 @@ import Magnet from './components/Magnet';
 import AnimatedText from './components/AnimatedText';
 import { CERTS, IMGS, EXPERIENCE } from './data/portfolioData';
 import Lightbox from './components/Lightbox';
+import GithubSection from './components/github/GithubSection';
+import ContactSection from './components/contact/ContactSection';
 
 // ─── INLINE SOCIAL ICONS ──────────────────────────────────────────────────────
 function GitHubIcon({ size = 24 }: { size?: number }) {
@@ -291,7 +293,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
 
     const observer = new IntersectionObserver(handleIntersection, observerOptions);
 
-    const sectionIds = ["hero", "about", "experience", "education", "skills", "projects", "certificates", "contact"];
+    const sectionIds = ["hero", "about", "experience", "education", "skills", "projects", "github", "certificates", "contact"];
     sectionIds.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
@@ -832,7 +834,10 @@ export default function App() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════ 7. CERTIFICATES */}
+      {/* ══════════════════════════════════════════════ 7. GITHUB ACTIVITY */}
+      <GithubSection theme={theme} isDark={isDark} />
+
+      {/* ═══════════════════════════════════════════════════ 8. CERTIFICATES */}
       <section id="certificates" className="rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] -mt-10 sm:-mt-12 md:-mt-14 relative z-20 pt-24 pb-32 px-5 sm:px-8 md:px-10 transition-colors duration-500"
         style={{ background: theme.sectionBg }}>
 
@@ -923,8 +928,11 @@ export default function App() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════════════ CONTACT */}
+      <ContactSection theme={theme} isDark={isDark} />
+
       {/* ═══════════════════════════════════════════════════════ FOOTER */}
-      <footer id="contact" className="py-16 px-8 relative z-30 flex flex-col items-center gap-6 transition-colors duration-500"
+      <footer className="py-16 px-8 relative z-30 flex flex-col items-center gap-6 transition-colors duration-500"
         style={{ background: theme.sectionBg, borderTop: `1px solid ${theme.borderFaint}` }}>
         <div className="flex items-center gap-8">
           <a href="https://github.com/Sharon-Sam14" target="_blank" rel="noreferrer"
