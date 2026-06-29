@@ -83,11 +83,22 @@ export async function getGithubOverview(): Promise<GithubOverview> {
         user(login: $login) {
           followers { totalCount }
           following { totalCount }
-          repositories(first: 100, privacy: PUBLIC, ownerAffiliations: OWNER) {
+          publicRepos: repositories(privacy: PUBLIC, ownerAffiliations: OWNER) {
             totalCount
+          }
+          repositories(first: 100, ownerAffiliations: [OWNER, COLLABORATOR]) {
             nodes {
               stargazerCount
               forkCount
+              defaultBranchRef {
+                target {
+                  ... on Commit {
+                    history {
+                      totalCount
+                    }
+                  }
+                }
+              }
             }
           }
           contributionsCollection {
@@ -95,7 +106,6 @@ export async function getGithubOverview(): Promise<GithubOverview> {
               totalContributions
             }
             totalCommitContributions
-            totalPullRequestContributions
           }
         }
       }
@@ -109,19 +119,26 @@ export async function getGithubOverview(): Promise<GithubOverview> {
     const user = json?.data?.user;
     if (!user) throw new Error('Failed to fetch GitHub overview');
 
-    const repos: Array<{ stargazerCount: number; forkCount: number }> =
-      user.repositories.nodes ?? [];
+    const repos: any[] = user.repositories.nodes ?? [];
+
+    const totalStars = repos.reduce((acc: number, r: any) => acc + (r.stargazerCount ?? 0), 0);
+    const totalForks = repos.reduce((acc: number, r: any) => acc + (r.forkCount ?? 0), 0);
+    const repoCommitsSum = repos.reduce((acc: number, r: any) => {
+      return acc + (r.defaultBranchRef?.target?.history?.totalCount ?? 0);
+    }, 0);
+
+    const contributionsCommits = user.contributionsCollection.totalCommitContributions ?? 0;
+    const totalCommits = Math.max(repoCommitsSum, contributionsCommits);
 
     return {
-      totalStars: repos.reduce((acc: number, r: { stargazerCount: number }) => acc + r.stargazerCount, 0),
-      publicRepos: user.repositories.totalCount,
-      totalForks: repos.reduce((acc: number, r: { forkCount: number }) => acc + r.forkCount, 0),
+      totalStars,
+      publicRepos: user.publicRepos.totalCount,
+      totalForks,
       followers: user.followers.totalCount,
       following: user.following.totalCount,
       totalContributions:
         user.contributionsCollection.contributionCalendar.totalContributions,
-      totalCommits:
-        user.contributionsCollection.totalCommitContributions,
+      totalCommits,
     };
   });
 }
