@@ -1,0 +1,19 @@
+# Ignore environment files
+portfolio-main/.env
+portfolio-main/.env.*
+.env
+.env.*
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore dependency directories
+node_modules/
+portfolio-main/node_modules/
+
+# Ignore builds
+dist/
+portfolio-main/dist/
+dist-ssr/
+portfolio-main/dist-ssr/
