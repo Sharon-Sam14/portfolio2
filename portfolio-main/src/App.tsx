@@ -64,7 +64,7 @@ function CloseIcon() {
 
 // ─── STATIC DATA ──────────────────────────────────────────────────────────────
 
-const NAV_ITEMS = ["About", "Experience", "Education", "Skills", "Projects", "Certificates", "Contact"] as const;
+const NAV_ITEMS = ["About", "Experience", "Education", "Skills", "Projects", "GitHub", "Certificates", "Contact"] as const;
 
 const GIFS = [
   "https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif",
@@ -316,6 +316,7 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
     else if (item === "Education") scrollTo("education");
     else if (item === "Skills")    scrollTo("skills");
     else if (item === "Projects")  scrollTo("projects");
+    else if (item === "GitHub")    scrollTo("github");
     else if (item === "Certificates") scrollTo("certificates");
     else if (item === "Contact")  scrollTo("contact");
   };
@@ -334,14 +335,14 @@ function Navbar({ theme, isDark, setIsDark, scrollTo }: NavbarProps) {
           Sharon Sam
         </button>
 
-        <nav className="hidden md:flex items-center gap-8 lg:gap-12">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6 xl:gap-8">
           {NAV_ITEMS.map((item) => {
             const isActive = activeSection === item.toLowerCase();
             return (
               <button
                 key={item}
                 onClick={() => handleNav(item)}
-                className={`text-sm lg:text-base font-medium uppercase tracking-wider transition-all duration-300 relative py-1 ${
+                className={`text-xs lg:text-sm xl:text-base font-medium uppercase tracking-wider transition-all duration-300 relative py-1 ${
                   isActive ? "opacity-100 scale-105" : "opacity-50 hover:opacity-85"
                 }`}
                 style={{ color: theme.text }}
