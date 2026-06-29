@@ -164,6 +164,62 @@ export async function getContributionGraph(): Promise<WeeklyContribution[]> {
   });
 }
 
+// ─── 2.5 Daily Contribution Calendar (GraphQL) ────────────────────────────────
+export interface DailyContribution {
+  date: string;
+  count: number;
+  level: number;
+}
+
+export async function getDailyContributions(): Promise<DailyContribution[]> {
+  return withCache<DailyContribution[]>('daily-contributions', async () => {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          contributionsCollection {
+            contributionCalendar {
+              weeks {
+                contributionDays {
+                  date
+                  contributionCount
+                  contributionLevel
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const res = await fetch(GITHUB_GRAPHQL_URL, {
+      method: 'POST',
+      headers: gqlHeaders(),
+      body: JSON.stringify({ query, variables: { login: GITHUB_USERNAME } }),
+    });
+    const json = await res.json();
+    const weeks = json?.data?.user?.contributionsCollection?.contributionCalendar?.weeks ?? [];
+
+    const days: DailyContribution[] = [];
+    const levelMap: Record<string, number> = {
+      NONE: 0,
+      FIRST_QUARTILE: 1,
+      SECOND_QUARTILE: 2,
+      THIRD_QUARTILE: 3,
+      FOURTH_QUARTILE: 4,
+    };
+
+    for (const w of weeks) {
+      for (const d of w.contributionDays) {
+        days.push({
+          date: d.date,
+          count: d.contributionCount,
+          level: levelMap[d.contributionLevel] ?? 0,
+        });
+      }
+    }
+    return days;
+  });
+}
+
 // ─── 3. Recent Repositories (GraphQL) ─────────────────────────────────────────
 export async function getRecentRepos(): Promise<GithubRepo[]> {
   return withCache<GithubRepo[]>('repos', async () => {

@@ -1,11 +1,13 @@
-// ─── Card 3: Contribution Calendar ───────────────────────────────────────────
-import { GitHubCalendar } from 'react-github-calendar';
+import { ActivityCalendar } from 'react-activity-calendar';
+import { useDailyContributions } from '../../hooks/useGithub';
 
 interface Theme {
   cardBg: string;
   cardBorder: string;
   text: string;
   textMuted: string;
+  pillBg: string;
+  pillBorder: string;
 }
 
 interface ContributionCalendarProps {
@@ -14,6 +16,8 @@ interface ContributionCalendarProps {
 }
 
 export default function ContributionCalendar({ theme, isDark }: ContributionCalendarProps) {
+  const { data, loading, error } = useDailyContributions();
+
   const darkTheme = {
     light: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
     dark:  ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
@@ -23,6 +27,18 @@ export default function ContributionCalendar({ theme, isDark }: ContributionCale
     light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
     dark:  ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
   };
+
+  if (loading) {
+    return (
+      <div
+        className="rounded-[32px] p-6 sm:p-8 animate-pulse"
+        style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
+      >
+        <div className="h-6 w-48 rounded-lg mb-6" style={{ background: theme.pillBg }} />
+        <div className="h-28 rounded-2xl" style={{ background: theme.pillBg }} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -36,10 +52,16 @@ export default function ContributionCalendar({ theme, isDark }: ContributionCale
         📅 Contribution Calendar
       </h3>
 
+      {error && (
+        <p className="text-sm mb-4" style={{ color: theme.textMuted }}>
+          Could not load contribution calendar.
+        </p>
+      )}
+
       <div className="overflow-x-auto">
         <div style={{ minWidth: 0 }}>
-          <GitHubCalendar
-            username="Sharon-Sam14"
+          <ActivityCalendar
+            data={data || []}
             colorScheme={isDark ? 'dark' : 'light'}
             theme={isDark ? darkTheme : lightThemeColors}
             fontSize={12}
@@ -61,7 +83,7 @@ export default function ContributionCalendar({ theme, isDark }: ContributionCale
         className="mt-4 text-xs font-light text-right uppercase tracking-widest"
         style={{ color: theme.textMuted }}
       >
-        Live · Updates automatically
+        Live · GraphQL API
       </p>
     </div>
   );

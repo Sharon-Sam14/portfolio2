@@ -5,10 +5,12 @@ import {
   getContributionGraph,
   getRecentRepos,
   getRecentActivity,
+  getDailyContributions,
   type GithubOverview,
   type WeeklyContribution,
   type GithubRepo,
   type GithubEvent,
+  type DailyContribution,
 } from '../services/github';
 
 interface FetchState<T> {
@@ -58,4 +60,8 @@ export function useRecentRepos(): FetchState<GithubRepo[]> {
 
 export function useRecentActivity(): FetchState<GithubEvent[]> {
   return useFetch(getRecentActivity, 'activity');
+}
+
+export function useDailyContributions(): FetchState<DailyContribution[]> {
+  return useFetch(getDailyContributions, 'daily-contributions');
 }
